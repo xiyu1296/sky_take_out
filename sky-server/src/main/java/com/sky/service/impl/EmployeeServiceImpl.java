@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.beans.beancontext.BeanContext;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -97,4 +98,35 @@ public class EmployeeServiceImpl implements EmployeeService {
         return new PageResult(total,record);
     }
 
+    public void startOrStop(Integer status, long id) {
+
+        Employee emp = Employee.builder()
+                .status(status)
+                .id(id)
+                .build();
+
+        employeeMapper.update(emp);
+
+    }
+
+    public Employee getById(long id){
+
+        Employee emp =  employeeMapper.getById(id);
+        emp.setPassword("****");
+
+        return  emp;
+    }
+
+    public void update(EmployeeDTO employeeDTO){
+
+        Employee emp = new Employee();
+        BeanUtils.copyProperties(employeeDTO,emp);
+
+        emp.setUpdateUser(BaseContext.getCurrentId());
+        emp.setUpdateTime(LocalDateTime.now());
+
+        employeeMapper.update(emp);
+
+
+    }
 }
