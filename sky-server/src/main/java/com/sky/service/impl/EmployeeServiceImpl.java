@@ -76,10 +76,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         emp.setStatus(StatusConstant.ENABLE);
         emp.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
-        emp.setCreateTime(LocalDateTime.now());
-        emp.setUpdateTime(LocalDateTime.now());
-        emp.setCreateUser(BaseContext.getCurrentId());
-        emp.setUpdateUser(BaseContext.getCurrentId());
 
         employeeMapper.insert(emp);
 
@@ -121,9 +117,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee emp = new Employee();
         BeanUtils.copyProperties(employeeDTO,emp);
-
-        emp.setUpdateUser(BaseContext.getCurrentId());
-        emp.setUpdateTime(LocalDateTime.now());
 
         employeeMapper.update(emp);
 
