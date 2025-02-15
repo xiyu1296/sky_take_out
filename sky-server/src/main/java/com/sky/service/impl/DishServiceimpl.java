@@ -90,4 +90,17 @@ public class DishServiceimpl implements DishService {
 
 
     }
+
+    public DishVO getDishWithFlavorByid(Long id){
+        Dish dish = dishMapper.selectById(id);
+
+        List<DishFlavor> dishFlavors = dishFlavorMapper.selectByDishId(id);
+
+        DishVO dishVO = new DishVO() ;
+        BeanUtils.copyProperties(dish,dishVO);
+        dishVO.setFlavors(dishFlavors);
+
+        return dishVO;
+    }
+
 }
