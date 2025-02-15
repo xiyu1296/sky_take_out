@@ -64,5 +64,15 @@ public class DishController {
         return Result.success(dishVO);
     }
 
+    @PutMapping
+    @ApiOperation("根据dto修改菜品")
+    public Result update(@RequestBody DishDTO dishDTO){
+        log.info("根据dto修改菜品:{}",dishDTO);
+
+        dishService.update(dishDTO);
+
+        return Result.success();
+    }
+
 
 }
