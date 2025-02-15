@@ -11,6 +11,5 @@ public interface DishFlavorMapper {
 
     void insert(List<DishFlavor> dfl);
 
-    @Delete("delete from sky_take_out.dish_flavor where id = #{dishId}")
-    void deleteByDishId(Long dishId);
+    void deleteByDishIds(List<Long> dishIds);
 }
