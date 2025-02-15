@@ -2,12 +2,16 @@ package com.sky.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.sky.constant.MessageConstant;
+import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
+import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.DishMapper;
+import com.sky.mapper.SetmealMapper;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -27,6 +32,8 @@ public class DishServiceimpl implements DishService {
     private DishMapper dishMapper;
     @Autowired
     private DishFlavorMapper dishFlavorMapper;
+    @Autowired
+    private SetmealMapper setmealMapper;
 
     @Transactional
     public void insert(DishDTO dishDTO) {
@@ -61,6 +68,27 @@ public class DishServiceimpl implements DishService {
                 voPage.getTotal(),
                 voPage.getResult()
         );
+
+    }
+
+    @Transactional
+    public void delete(List<Long> ids){
+        //启用不能删
+        for(Long id: ids){
+            if(Objects.equals(dishMapper.selectStatusById(id), StatusConstant.ENABLE)){
+                throw new DeletionNotAllowedException(MessageConstant.DISH_ON_SALE);
+            }
+        }
+        //套餐不能删
+        List<Long> setMealIds = setmealMapper.getSetmealIdsByDishIds(ids);
+        if(setMealIds != null && !setMealIds.isEmpty()){
+            throw new DeletionNotAllowedException(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
+        }
+        //删除
+        for(Long id : ids){
+            dishMapper.deleteById(id);
+            dishFlavorMapper.deleteByDishId(id);
+        }
 
     }
 }
