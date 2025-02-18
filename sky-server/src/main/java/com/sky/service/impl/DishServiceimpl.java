@@ -11,6 +11,7 @@ import com.sky.entity.DishFlavor;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.DishMapper;
+import com.sky.mapper.SetmealDishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
@@ -18,7 +19,6 @@ import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +36,34 @@ public class DishServiceimpl implements DishService {
     @Autowired
     private DishFlavorMapper dishFlavorMapper;
     @Autowired
+    private SetmealDishMapper setmealDishMapper;
+    @Autowired
     private SetmealMapper setmealMapper;
 
+
+    /**
+     * 条件查询菜品和口味
+     * @param dish
+     * @return
+     */
+    public List<DishVO> listWithFlavor(Dish dish) {
+        List<Dish> dishList = dishMapper.list(dish);
+
+        List<DishVO> dishVOList = new ArrayList<>();
+
+        for (Dish d : dishList) {
+            DishVO dishVO = new DishVO();
+            BeanUtils.copyProperties(d,dishVO);
+
+            //根据菜品id查询对应的口味
+            List<DishFlavor> flavors = dishFlavorMapper.selectByDishId(d.getId());
+
+            dishVO.setFlavors(flavors);
+            dishVOList.add(dishVO);
+        }
+
+        return dishVOList;
+    }
     @Transactional
     public void insert(DishDTO dishDTO) {
 
@@ -83,7 +109,7 @@ public class DishServiceimpl implements DishService {
             }
         }
         //套餐不能删
-        List<Long> setMealIds = setmealMapper.getSetmealIdsByDishIds(ids);
+        List<Long> setMealIds = setmealDishMapper.getSetmealIdsByDishIds(ids);
         if(setMealIds != null && !setMealIds.isEmpty()){
             throw new DeletionNotAllowedException(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
         }
@@ -122,7 +148,11 @@ public class DishServiceimpl implements DishService {
             dishFlavorMapper.insert(dishFlavors);
         }
 
-    };
+    }
+
+
+
+
 
 
 }
