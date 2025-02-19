@@ -19,6 +19,7 @@ import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,8 @@ public class DishServiceimpl implements DishService {
     private SetmealDishMapper setmealDishMapper;
     @Autowired
     private SetmealMapper setmealMapper;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
 
     /**
@@ -47,9 +50,18 @@ public class DishServiceimpl implements DishService {
      * @return
      */
     public List<DishVO> listWithFlavor(Dish dish) {
+
+        String keyInRedisHash = "dish_"+ dish.getCategoryId();
+
+        List<DishVO>  dishVOList = new ArrayList<>();
+        List<DishVO> tmp = (List<DishVO>) redisTemplate.opsForValue().get(keyInRedisHash);
+        if(tmp!=null && !tmp.isEmpty()){
+            dishVOList = tmp;
+            return dishVOList;
+        }
+
         List<Dish> dishList = dishMapper.list(dish);
 
-        List<DishVO> dishVOList = new ArrayList<>();
 
         for (Dish d : dishList) {
             DishVO dishVO = new DishVO();
@@ -59,11 +71,18 @@ public class DishServiceimpl implements DishService {
             List<DishFlavor> flavors = dishFlavorMapper.selectByDishId(d.getId());
 
             dishVO.setFlavors(flavors);
-            dishVOList.add(dishVO);
+                dishVOList.add(dishVO);
+
+        }
+
+        if (dishVOList != null) {
+            redisTemplate.opsForValue().set(keyInRedisHash,dishVOList);
         }
 
         return dishVOList;
     }
+
+
     @Transactional
     public void insert(DishDTO dishDTO) {
 
