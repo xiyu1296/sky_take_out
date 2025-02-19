@@ -11,9 +11,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.cache.CacheProperties;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/admin/dish")
@@ -23,12 +27,28 @@ public class DishController {
 
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    private void deleteInRedis(String pattern){
+        Set keyInRedis = new HashSet<>();
+        Set tmp = new HashSet<>();
+        tmp = redisTemplate.keys(pattern);
+        if(tmp!=null && !tmp.isEmpty()){
+            keyInRedis = tmp;
+            redisTemplate.delete(keyInRedis);
+        }
+    }
 
     @PostMapping
     @ApiOperation("新增菜品")
     public Result addDish(@RequestBody DishDTO dishDTO){
 
         dishService.insert(dishDTO);
+
+        String pat = "dish_" + dishDTO.getCategoryId();
+
+        deleteInRedis(pat);
 
         return Result.success();
 
@@ -51,6 +71,9 @@ public class DishController {
 
         dishService.delete(ids);
 
+        String pat = "dish_*";
+        deleteInRedis(pat);
+
         return Result.success();
     }
 
@@ -70,6 +93,9 @@ public class DishController {
         log.info("根据dto修改菜品:{}",dishDTO);
 
         dishService.update(dishDTO);
+
+        String pat = "dish_*";
+        deleteInRedis(pat);
 
         return Result.success();
     }
