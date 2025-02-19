@@ -8,10 +8,12 @@ import com.sky.vo.DishItemVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 
 @RestController("userSetmealController")
@@ -41,13 +43,14 @@ public class SetmealController {
     /**
      * 根据套餐id查询包含的菜品列表
      *
-     * @param id
+     * @param categoryid
      * @return
      */
     @GetMapping("/dish/{id}")
     @ApiOperation("根据套餐id查询包含的菜品列表")
-    public Result<List<DishItemVO>> dishList(@PathVariable("id") Long id) {
-        List<DishItemVO> list = setmealService.getDishItemById(id);
+    @Cacheable(cacheNames = "SetmealCache",key = "#categoryid")
+    public Result<List<DishItemVO>> dishList(@PathVariable("id") Long categoryid) {
+        List<DishItemVO> list = setmealService.getDishItemById(categoryid);
         return Result.success(list);
     }
 }
