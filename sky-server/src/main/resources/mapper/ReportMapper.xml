@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.ReportMapper">
+
+    <select id="getUserByTime" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM user
+        <where>
+            <if test="beginTime != null">
+                AND create_time &gt;= #{beginTime}
+            </if>
+            <if test="endTime != null">
+                AND create_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+    <select id="getOrderByTimeAndStatus" resultType="java.lang.Integer">
+        select count(*) from orders
+        <where>
+            <if test="status != null">and status = #{status}</if>
+            <if test="begin != null">AND order_time &gt;= #{begin}</if>
+            <if test="end != null">and order_time &lt;= #{end}</if>
+        </where>
+    </select>
+
+    <select id="getSalesByTime" resultType="com.sky.dto.GoodsSalesDTO">
+        select od.name,sum(od.number)number
+        from order_detail od,orders o
+        where od.order_id = o.id and o.status = 5
+        <if test="begin != null">
+            and o.order_time &gt; #{begin}
+        </if>
+        <if test="end != null">
+            and o.order_time &lt; #{end}
+        </if>
+        group by od.name
+        order by number desc
+        limit 0,10
+    </select>
+
+</mapper>
