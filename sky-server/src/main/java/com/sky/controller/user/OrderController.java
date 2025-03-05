@@ -10,6 +10,7 @@ import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -104,6 +105,14 @@ public class OrderController {
     public Result repetition(@PathVariable Long id) {
         orderService.repetition(id);
         return Result.success();
+    }
+
+    @GetMapping("/reminder/{id}")
+    @ApiOperation("催单")
+    public void rushorder(@PathVariable Long id){
+
+        orderService.rushorder(id);
+
     }
 
 }
