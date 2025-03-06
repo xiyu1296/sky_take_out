@@ -49,4 +49,7 @@ public interface SetmealMapper {
 
     @AutoFill(OperationType.INSERT)
     void update(Setmeal setmeal);
+
+    Integer countByMap(Map map);
+
 }

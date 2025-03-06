@@ -70,6 +70,17 @@
         </where>
         order by s.create_time desc
     </select>
+    <select id="countByMap" parameterType="map" resultType="java.lang.Integer">
+        select count(id) from setmeal
+        <where>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+        </where>
+    </select>
 
 
 </mapper>
