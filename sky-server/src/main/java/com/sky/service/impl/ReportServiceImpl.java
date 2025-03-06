@@ -6,17 +6,22 @@ import com.sky.entity.Orders;
 import com.sky.entity.User;
 import com.sky.mapper.ReportMapper;
 import com.sky.service.ReportService;
-import com.sky.vo.OrderReportVO;
-import com.sky.vo.SalesTop10ReportVO;
-import com.sky.vo.TurnoverReportVO;
-import com.sky.vo.UserReportVO;
+import com.sky.service.WorkspaceService;
+import com.sky.vo.*;
 import io.swagger.models.auth.In;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.util.StringUtil;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,6 +35,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Autowired
     private ReportMapper reportMapper;
+    @Autowired
+    private WorkspaceService workspaceService;
 
     public TurnoverReportVO getturnoverStatistics(LocalDate begin, LocalDate end) {
         List<LocalDate> timelist = new ArrayList<>();
@@ -156,6 +163,88 @@ public class ReportServiceImpl implements ReportService {
                 .nameList(nameList.stream().map(String::valueOf).collect(Collectors.joining(",")))
                 .numberList(numberList.stream().map(String::valueOf).collect(Collectors.joining(",")))
                 .build();
+    }
+
+    public void exportDate(HttpServletResponse response) throws IOException {
+        LocalDate begin = LocalDate.now().minusDays(30);
+        LocalDate end = LocalDate.now().minusDays(1);
+        LocalDateTime begintime = begin.atTime(LocalTime.of(0,0));
+        LocalDateTime endtime = end.atTime(LocalTime.of(23,59,59));
+        List<BusinessDataVO> busslist = new ArrayList<>();
+
+        //查询数据
+        BusinessDataVO totalstatistic = workspaceService.getBusinessData(begintime,endtime);
+        BusinessDataVO tmp = workspaceService.getBusinessData(begintime,begin.atTime(LocalTime.of(23,59,59)));
+        if(tmp == null){
+            tmp.setNewUsers(0);
+            tmp.setTurnover((double) 0);
+            tmp.setUnitPrice((double)0);
+            tmp.setOrderCompletionRate((double)0);
+            tmp.setValidOrderCount(0);
+        }
+        busslist.add(tmp);
+        LocalDate tmpdate = begin;
+        while(!tmpdate.isEqual(end)){
+            tmpdate = tmpdate.plusDays(1);
+            tmp = workspaceService.getBusinessData(tmpdate.atTime(LocalTime.of(0,0)),tmpdate.atTime(LocalTime.of(23,59,59)));
+            if(tmp == null){
+                tmp.setNewUsers(0);
+                tmp.setTurnover((double) 0);
+                tmp.setUnitPrice((double)0);
+                tmp.setOrderCompletionRate((double)0);
+                tmp.setValidOrderCount(0);
+            }
+            busslist.add(tmp);
+        }
+
+        //插入excel
+        InputStream in = null;
+        XSSFWorkbook excel = null;
+        try {
+            in = this.getClass().getClassLoader().getResourceAsStream("template/运营数据报表模板.xlsx");
+
+            excel = new XSSFWorkbook(in);
+            XSSFSheet sheet = excel.getSheet("Sheet1");
+
+            XSSFRow timerow = sheet.getRow(1);
+            timerow.getCell(1).setCellValue("时间："+begintime + "至" + endtime);
+
+            XSSFRow totalrow1 = sheet.getRow(3);
+            totalrow1.getCell(2).setCellValue(totalstatistic.getTurnover());
+            totalrow1.getCell(4).setCellValue(totalstatistic.getOrderCompletionRate());
+            totalrow1.getCell(6).setCellValue(totalstatistic.getNewUsers());
+
+            XSSFRow totalrow2 = sheet.getRow(4);
+            totalrow2.getCell(2).setCellValue(totalstatistic.getValidOrderCount());
+            totalrow2.getCell(4).setCellValue(totalstatistic.getUnitPrice());
+
+            tmpdate = begin;
+            for(int i = 0; i < busslist.size() ; i++){
+                XSSFRow row = sheet.getRow(7 + i);
+                BusinessDataVO businessData = busslist.get(i);
+                row.getCell(1).setCellValue(String.valueOf(tmpdate));
+                row.getCell(2).setCellValue(businessData.getTurnover());
+                row.getCell(3).setCellValue(businessData.getValidOrderCount());
+                row.getCell(4).setCellValue(businessData.getOrderCompletionRate());
+                row.getCell(5).setCellValue(businessData.getUnitPrice());
+                row.getCell(6).setCellValue(businessData.getNewUsers());
+
+                tmpdate = tmpdate.plusDays(1);
+
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            ServletOutputStream servletOutputStream = response.getOutputStream();
+            excel.write(servletOutputStream);
+
+            servletOutputStream.close();
+            in.close();
+            excel.close();
+        }
+
+        //输出到浏览器
+
     }
 
 }
