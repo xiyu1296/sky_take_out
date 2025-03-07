@@ -1,0 +1,32 @@
+### 项目结构
+##### total
+![[Pasted image 20250307084618.png]]![[Pasted image 20250307084626.png]]![[Pasted image 20250307084632.png]]![[Pasted image 20250307084638.png]]
+
+##### server'
+![[Pasted image 20250307084701.png]]![[Pasted image 20250307084706.png]]![[Pasted image 20250307084529.png]]
+
+##### pojo
+![[Pasted image 20250307084730.png]]
+![[Pasted image 20250307084756.png]]
+
+##### common
+![[Pasted image 20250307084829.png]]
+![[Pasted image 20250307084820.png]]
+
+
+##### sum
+common中的
+	常量：标准java类--》作为常数使用
+	工具类：标准java类--》作为库函数使用
+	配置类： 读取yml文件配置信息，同名注入，@component交给spring管理
+pojo中的（与数据传递有关，实现序列化器）
+	entity：实体类，与元素对应
+	dto：对前端传来的数据进行包装类
+	vo：将返回给前端的数据进行包装类
+sever中的
+	config：服务器配置类--》将各种配置加载到服务器上（拦截器，异常处理器，部分工具类注入属性为bean对象，swagger等）
+	controller，service，mapper：对前端请求进行处理的核心组件
+	interceptor，aspect，annotation，handler，task：在程序运行时处理contidional事件
+skyapplication
+	![[Pasted image 20250307090025.png]]
+	设置项目启动选项
